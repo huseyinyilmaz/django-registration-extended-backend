@@ -9,6 +9,7 @@ from registration.backends.default import DefaultBackend
 
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from warnings import warn
 
 
 def normalize_email(email):
@@ -86,15 +87,23 @@ class ExtendedBackend(DefaultBackend):
 
         text_content = render_to_string('registration/activation_email.txt',
                                         ctx_dict)
-
-        html_content = render_to_string('registration/activation_email.html',
-                                        ctx_dict)
+        try:
+            html_content = render_to_string('registration/activation_email.html',
+                                            ctx_dict)
+        except:
+            # If any error occurs during html preperation do not add html content
+            # This is here to make sure when we switch from default backend to extended
+            # we do not get any missing here
+            html_content = None
+            # XXX we should not catch all exception for this
+            warn('registration/activation_email.html template cannot be rendered. Make sure you have it to send HTML messages. Will send email as TXT')
 
         msg = EmailMultiAlternatives(subject,
                                      text_content,
                                      from_email,
                                      [to_email])
+        if html_content:
+            msg.attach_alternative(html_content, "text/html")
 
-        msg.attach_alternative(html_content, "text/html")
         msg.send()
 
