@@ -55,7 +55,7 @@ class ExtendedBackend(DefaultBackend):
             create_inactive_user(username, email,
                                  password, site,
                                  False)
-        profile = new_user.registrationprofile.all()[0]
+        profile = new_user.registrationprofile_set.all()[0]
 
         self.send_activation_email(site, profile)
         signals.user_registered.send(sender=self.__class__,
